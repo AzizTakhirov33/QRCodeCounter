@@ -1,0 +1,117 @@
+/* Общие стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.manual-input, .file-upload {
+    padding: 20px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.manual-input {
+    flex: 1; /* Центр */
+    text-align: center;
+}
+
+.manual-input textarea {
+    width: 80%;
+    /* width: 50vh; */
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none;
+}
+
+.file-upload {
+    display: 0.5;
+    /* flex-direction: column;  Располагаем элементы по вертикали */
+    justify-content: center; /* Выравниваем по вертикали */
+    align-items: center;     /* Выравниваем по горизонтали */
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Стили для колонок с результатами */
+.columns {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+
+.column {
+    flex: 1;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Стили для контейнера списка */
+ul {
+    list-style: none; /* Убираем маркеры списка */
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    white-space: nowrap; /* Отключаем перенос текста */
+    overflow: hidden; /* Скрываем лишний текст */
+    text-overflow: ellipsis; /* Добавляем многоточие для обрезки */
+    max-width: 100%; /* Гарантируем, что элемент не выйдет за пределы контейнера */
+    box-sizing: border-box; /* Учитываем padding в ширине */
+    padding: 8px;
+    margin-bottom: 2px;
+    font-family: monospace; /* Фиксированный шрифт */
+    font-size: 14px;
+    word-break: break-all; /* Принудительное разделение слов, если нет пробелов */
+    background-color: #f9f9f9; /* Светлый фон */
+    border: 1px solid #ccc; /* Рамка для каждого элемента */
+    border-radius: 4px;
+}

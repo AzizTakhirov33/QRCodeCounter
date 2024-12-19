@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сканер QR-кодов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Сканер QR-кодов</h1>
+        
+        <!-- Форма для загрузки файла -->
+
+        <div class="wrapper">
+            <!-- Центр: Поле для ввода данных вручную -->
+            <div class="manual-input">
+                <h2>Ввод отсканированных QR-кодов</h2>
+                <textarea id="inputData" placeholder="Введите QR-коды здесь..." rows="5"></textarea>
+                <button id="scanButton">Отправить отсканированные QR-коды</button>
+            </div>
+
+            <!-- Справа: Форма для загрузки файла -->
+            <div class="file-upload">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <h2>Загрузить файл</h2>
+                    <input type="file" id="fileInput" name="file" accept=".txt" required>
+                    <button type="submit">Загрузить файл</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Результаты -->
+        <div class="columns">
+            <div class="column" id="remainingCodes">
+                <h3 id="remainingCount">Оставшиеся QR-коды</h3>
+                <ul id="remainingList"></ul>
+            </div>
+            <div class="column" id="scannedCodes">
+                <h3 id="scannedCount">Отсканированные QR-коды</h3>
+                <ul id="scannedList"></ul>
+            </div>
+            <div class="column" id="duplicatesCodes">
+                <h3 id="duplicateCount">Дубликаты QR-кодов</h3>
+                <ul id="duplicatesList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Сброс при обновлении страницы
+            document.getElementById('scannedList').innerHTML = '';
+            document.getElementById('duplicatesList').innerHTML = '';
+            document.getElementById('scannedCount').textContent = 'Отсканированные QR-коды';
+            document.getElementById('duplicateCount').textContent = 'Дубликаты QR-кодов';
+        });
+    
+        // Общая функция для воспроизведения звука
+        const playSound = (soundPath) => {
+            const audio = new Audio(soundPath);
+            audio.onerror = () => console.error('Ошибка при загрузке звукового файла.');
+            audio.play().catch(error => console.error('Ошибка воспроизведения звука:', error));
+        };
+    
+        // Звук для успешного сканирования
+        const playSuccessSound = () => playSound('/static/success_beep.mp3'); // Укажите путь к звуковому файлу
+    
+        // Звук для дубликатов
+        const playDuplicateSound = () => playSound('/static/beep_sound.mp3'); // Убедитесь, что путь правильный
+    
+        // Автоматическое нажатие кнопки после завершения ввода
+        let inputTimeout;
+        document.getElementById('inputData').addEventListener('input', function () {
+            clearTimeout(inputTimeout); // Сбрасываем таймер
+            inputTimeout = setTimeout(() => document.getElementById('scanButton').click(), 1000); // Задержка 1 секунда
+        });
+    
+        // Обработчик отправки формы с файлом
+        document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+    
+            let formData = new FormData();
+            formData.append("file", document.getElementById('fileInput').files[0]);
+    
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const remainingList = document.getElementById('remainingList');
+                    remainingList.innerHTML = '';
+                    data.qr_codes.forEach(code => {
+                        const li = document.createElement('li');
+                        li.textContent = code;
+                        remainingList.appendChild(li);
+                    });
+    
+                    document.getElementById('remainingCount').textContent = `Оставшиеся QR-коды: ${data.remaining_count}`;
+                    document.getElementById('scannedCount').textContent = `Отсканированные QR-коды: ${data.scanned_count}`;
+                    document.getElementById('duplicateCount').textContent = 'Дубликаты QR-кодов: 0';
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    
+        // Обработчик отправки одного отсканированного QR-кода
+        document.getElementById('scanButton').addEventListener('click', function () {
+            const inputField = document.getElementById('inputData');
+            const qrCode = inputField.value.trim();
+    
+            if (!qrCode) {
+                alert('Введите QR-код.');
+                return;
+            }
+    
+            fetch('/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qr_code: qrCode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const scannedList = document.getElementById('scannedList');
+                    const li = document.createElement('li');
+                    li.textContent = qrCode;
+                    scannedList.appendChild(li);
+    
+                    const remainingList = document.getElementById('remainingList');
+                    const remainingItems = Array.from(remainingList.getElementsByTagName('li'));
+                    remainingItems.forEach(item => {
+                        if (item.textContent === qrCode) {
+                            remainingList.removeChild(item);
+                        }
+                    });
+    
+                    document.getElementById('scannedCount').textContent = `Отсканированные QR-коды: ${data.scanned_count}`;
+                    document.getElementById('remainingCount').textContent = `Оставшиеся QR-коды: ${data.remaining_codes.length}`;
+    
+                    playSuccessSound(); // Воспроизведение звука после успешного сканирования
+    
+                    inputField.value = '';
+                } else if (data.status === 'duplicate') {
+                    const duplicatesList = document.getElementById('duplicatesList');
+                    const existingItem = Array.from(duplicatesList.children).find(item => item.dataset.code === qrCode);
+    
+                    if (existingItem) {
+                        const duplicateCount = parseInt(existingItem.dataset.duplicates || '1', 10) + 1;
+                        existingItem.dataset.duplicates = duplicateCount;
+                        existingItem.textContent = `${qrCode} (Дубликаты: ${duplicateCount})`;
+                    } else {
+                        const li = document.createElement('li');
+                        li.dataset.code = qrCode;
+                        li.dataset.duplicates = 1;
+                        li.textContent = `${qrCode} (Дубликаты: 1)`;
+                        duplicatesList.appendChild(li);
+                    }
+    
+                    const duplicateCountElement = document.getElementById('duplicateCount');
+                    const totalDuplicates = parseInt(duplicateCountElement.dataset.totalDuplicates || '0', 10) + 1;
+                    duplicateCountElement.dataset.totalDuplicates = totalDuplicates;
+                    duplicateCountElement.textContent = `Дубликаты QR-кодов: ${totalDuplicates}`;
+    
+                    playDuplicateSound(); // Воспроизведение звука при обнаружении дубликата
+    
+                    inputField.value = '';
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>           
+    
+</body>
+</html>
