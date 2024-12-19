@@ -73,7 +73,7 @@
         let inputTimeout;
         document.getElementById('inputData').addEventListener('input', function () {
             clearTimeout(inputTimeout); // Сбрасываем таймер
-            inputTimeout = setTimeout(() => document.getElementById('scanButton').click(), 1000); // Задержка 1 секунда
+            inputTimeout = setTimeout(() => document.getElementById('scanButton').click(), 300); // Задержка 1 секунда
         });
     
         // Обработчик отправки формы с файлом
